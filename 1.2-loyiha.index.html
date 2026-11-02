@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="uz" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AnimeUz — Anime olami</title>
+<script>document.documentElement.dataset.theme = localStorage.getItem('animeuz_theme') || 'dark';</script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0b0e17; --card: #141a2b; --accent: #e94560; --text: #eaeaf0;
+    --muted: #9aa0b4; --border: #1e2540; --tag: #232b47; --text2: #c6cadb;
+    --header: rgba(11,14,23,.85);
+  }
+  [data-theme="light"] {
+    --bg: #f2f4fa; --card: #ffffff; --accent: #d63352; --text: #1d2333;
+    --muted: #667089; --border: #e0e4f0; --tag: #eceff8; --text2: #3a4157;
+    --header: rgba(255,255,255,.88);
+  }
+
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    transition: background .3s, color .3s;
+  }
+
+  header {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 5%;
+    background: var(--header); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+  .logo { font-size: 24px; font-weight: 800; white-space: nowrap; }
+  .logo span { color: var(--accent); }
+
+  .search-box { display: flex; gap: 8px; flex: 1; max-width: 430px; margin-left: auto; }
+  .search-box input {
+    flex: 1; min-width: 0;
+    background: var(--card); border: 1px solid var(--border);
+    color: var(--text); padding: 10px 16px;
+    border-radius: 10px; outline: none; transition: border .2s;
+  }
+  .search-box input:focus { border-color: var(--accent); }
+  .search-box button {
+    background: var(--accent); color: #fff; border: none;
+    padding: 10px 18px; border-radius: 10px;
+    font-weight: 700; cursor: pointer; transition: transform .15s;
+  }
+  .search-box button:hover { transform: scale(1.05); }
+
+  .header-btns { display: flex; gap: 8px; }
+  .icon-btn {
+    background: var(--card); border: 1px solid var(--border);
+    color: var(--text); width: 42px; height: 42px; border-radius: 10px;
+    font-size: 17px; cursor: pointer; transition: .2s;
+  }
+  .icon-btn:hover { border-color: var(--accent); transform: translateY(-2px); }
+
+  .hero {
+    text-align: center; padding: 60px 5% 40px;
+    background: linear-gradient(180deg, rgba(233,69,96,.12), transparent);
+  }
+  .hero h1 { font-size: clamp(28px, 5vw, 48px); line-height: 1.2; }
+  .hero h1 em { color: var(--accent); font-style: normal; }
+  .hero p { color: var(--muted); margin: 14px auto 0; max-width: 560px; }
+
+  .tabs { display: flex; flex-wrap: wrap; gap: 10px; padding: 0 5%; margin-bottom: 8px; }
+  .tab {
+    background: var(--card); border: 1px solid var(--border); color: var(--muted);
+    padding: 9px 16px; border-radius: 20px; cursor: pointer;
+    font-size: 14px; font-weight: 600; transition: .2s;
+  }
+  .tab:hover { border-color: var(--accent); color: var(--text); }
+  .tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  .section-title {
+    padding: 0 5%; margin: 24px 0 18px;
+    font-size: 22px; border-left: 4px solid var(--accent); padding-left: 12px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 18px; padding: 0 5% 30px;
+  }
+  .anime-card {
+    position: relative;
+    background: var(--card); border-radius: 14px; overflow: hidden;
+    cursor: pointer; transition: transform .25s, box-shadow .25s;
+    border: 1px solid var(--border);
+  }
+  .anime-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 14px 30px rgba(233,69,96,.25);
+  }
+  .anime-card img { width: 100%; height: 260px; object-fit: cover; display: block; }
+  .fav-btn {
+    position: absolute; top: 10px; right: 10px;
+    width: 36px; height: 36px; border-radius: 50%; border: none;
+    background: rgba(0,0,0,.55); font-size: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform .15s, background .2s;
+  }
+  .fav-btn:hover { transform: scale(1.15); background: rgba(0,0,0,.8); }
+  .card-info { padding: 12px; }
+  .card-info h3 {
+    font-size: 15px; line-height: 1.35;
+    display: -webkit-box; -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden; height: 40px;
+  }
+  .card-meta { display: flex; justify-content: space-between; margin-top: 8px; font-size: 13px; color: var(--muted); }
+  .score { color: #ffc94d; font-weight: 700; }
+
+  .pager { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 0 5% 60px; }
+  .pager button {
+    background: var(--card); border: 1px solid var(--border); color: var(--text);
+    padding: 10px 18px; border-radius: 10px; cursor: pointer; font-weight: 600; transition: .2s;
+  }
+  .pager button:hover:not(:disabled) { border-color: var(--accent); }
+  .pager button:disabled { opacity: .4; cursor: not-allowed; }
+  #pageInfo { color: var(--muted); font-size: 14px; min-width: 70px; text-align: center; }
+
+  .status { text-align: center; padding: 60px 5%; color: var(--muted); font-size: 18px; }
+  .spinner {
+    width: 44px; height: 44px; margin: 0 auto 16px;
+    border: 4px solid var(--border); border-top-color: var(--accent);
+    border-radius: 50%; animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .modal-bg {
+    position: fixed; inset: 0; background: rgba(0,0,0,.7);
+    display: none; align-items: center; justify-content: center;
+    padding: 20px; z-index: 100;
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: var(--card); border-radius: 16px;
+    max-width: 680px; width: 100%; max-height: 85vh;
+    overflow-y: auto; display: flex; gap: 20px; padding: 24px;
+    border: 1px solid var(--border);
+  }
+  .modal img { width: 220px; border-radius: 10px; flex-shrink: 0; align-self: flex-start; }
+  .modal-body { flex: 1; min-width: 0; }
+  .modal h2 { margin-bottom: 4px; color: var(--accent); }
+  .jap { color: var(--muted); font-size: 13px; margin-bottom: 6px; }
+  .modal .tags { margin: 10px 0; }
+  .tag {
+    display: inline-block; background: var(--tag); color: var(--muted);
+    padding: 4px 10px; border-radius: 20px; font-size: 12px; margin: 2px;
+  }
+  .modal p { color: var(--text2); line-height: 1.6; font-size: 14px; }
+  #mDesc { margin-top: 10px; }
+  #treylBox { margin-top: 14px; }
+  #treylBox iframe { width: 100%; aspect-ratio: 16/9; border: none; border-radius: 10px; }
+  .modal-btns { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+  .close-btn {
+    background: var(--accent); color: #fff; border: none;
+    padding: 10px 22px; border-radius: 10px; font-weight: 700; cursor: pointer;
+  }
+
+  /* ===== TARJIMA TUGMASI ===== */
+  .tarjima-btn {
+    margin-top: 12px; background: transparent; border: 1px solid var(--accent);
+    color: var(--accent); padding: 8px 16px; border-radius: 10px;
+    cursor: pointer; font-weight: 700; transition: .2s;
+  }
+  .tarjima-btn:hover { background: var(--accent); color: #fff; }
+  .tarjima-btn:disabled { opacity: .6; cursor: wait; }
+
+  /* ===== QAHRAMONLAR ===== */
+  .chars-title { margin-top: 16px; font-size: 15px; color: var(--accent); }
+  .chars-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+    gap: 10px; margin-top: 8px;
+  }
+  .char-card { background: var(--tag); border-radius: 12px; padding: 10px 6px; text-align: center; }
+  .char-card img {
+    width: 64px; height: 64px; object-fit: cover;
+    border-radius: 50%; border: 2px solid var(--accent);
+  }
+  .char-name { font-size: 11px; margin-top: 6px; line-height: 1.3; word-break: break-word; }
+  .char-role { font-size: 10px; color: var(--muted); margin-top: 3px; }
+  .char-va { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  footer { text-align: center; padding: 26px; border-top: 1px solid var(--border); color: var(--muted); font-size: 14px; }
+
+  @media (max-width: 640px) {
+    header { flex-wrap: wrap; }
+    .search-box { order: 3; max-width: none; width: 100%; margin-left: 0; }
+    .header-btns { margin-left: auto; }
+    .modal { flex-direction: column; align-items: center; text-align: center; }
+    .modal img { width: 160px; }
+    .hero { padding: 40px 5% 30px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Anime<span>Uz</span> 🌸</div>
+  <form class="search-box" onsubmit="return qidiruv(event)">
+    <input type="text" id="searchInput" placeholder="Anime nomini yozing... (masalan: Naruto)">
+    <button type="submit">Qidirish</button>
+  </form>
+  <div class="header-btns">
+    <button class="icon-btn" onclick="tasodifiy()" title="Tasodifiy anime">🎲</button>
+    <button class="icon-btn" id="mavzuBtn" title="Tungi/kunduzgi rejim">☀️</button>
+  </div>
+</header>
+
+<section class="hero">
+  <h1>Eng zo'r <em>animelar</em> bir joyda</h1>
+  <p>Reytinglar, tavsiflar, treylerlar, qahramonlar va tarjima — barchasi MyAnimeList asosida.</p>
+</section>
+
+<nav class="tabs">
+  <button class="tab active" data-rejim="top">🔥 Top</button>
+  <button class="tab" data-rejim="airing">📺 Efirda</button>
+  <button class="tab" data-rejim="season">📅 Mavsum</button>
+  <button class="tab" data-rejim="movies">🎬 Filmlar</button>
+  <button class="tab" data-rejim="upcoming">🗓 Kutilmoqda</button>
+  <button class="tab" data-rejim="fav">❤️ Saqlanganlar</button>
+</nav>
+
+<h2 class="section-title" id="sectionTitle">🔥 Top reyting</h2>
+
+<div class="grid" id="grid"></div>
+<div class="status" id="status"><div class="spinner"></div>Yuklanmoqda...</div>
+
+<div class="pager" id="pager" style="display:none">
+  <button id="prevBtn">← Oldingi</button>
+  <span id="pageInfo"></span>
+  <button id="nextBtn">Keyingi →</button>
+</div>
+
+<!-- Modal -->
+<div class="modal-bg" id="modalBg" onclick="modalYop(event)">
+  <div class="modal">
+    <img id="mImg" src="" alt="Poster">
+    <div class="modal-body">
+      <h2 id="mTitle"></h2>
+      <div class="jap" id="mTitleJap"></div>
+      <div class="tags" id="mTags"></div>
+      <p id="mInfo"></p>
+      <p id="mDesc"></p>
+      <button class="tarjima-btn" id="tarjimaBtn" style="display:none"
+        title="Mashina tarjimasi (bepul API)">🇺🇿 O'zbekchaga tarjima</button>
+      <div id="mCharsBox" style="display:none">
+        <h3 class="chars-title">👥 Qahramonlar</h3>
+        <div class="chars-grid" id="mChars"></div>
+      </div>
+      <div id="treylBox"></div>
+      <div class="modal-btns">
+        <button class="close-btn" id="favModalBtn">❤️ Saqlash</button>
+        <button class="close-btn" id="treylBtn" style="display:none">▶ Treylerni ko'rish</button>
+        <button class="close-btn" onclick="modalYopish()">Yopish</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>© 2025 AnimeUz · Ma'lumotlar: Jikan API (MyAnimeList) · Siz uchun ❤ bilan</footer>
+
+<script>
+const API = 'https://api.jikan.moe/v4';
+const grid = document.getElementById('grid');
+const statusEl = document.getElementById('status');
+const sarlavha = document.getElementById('sectionTitle');
+const pager = document.getElementById('pager');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const pageInfo = document.getElementById('pageInfo');
+const modalBg = document.getElementById('modalBg');
+const favModalBtn = document.getElementById('favModalBtn');
+const treylBtn = document.getElementById('treylBtn');
+const treylBox = document.getElementById('treylBox');
+const searchInput = document.getElementById('searchInput');
+const mDesc = document.getElementById('mDesc');
+const tarjimaBtn = document.getElementById('tarjimaBtn');
+const mCharsBox = document.getElementById('mCharsBox');
+const mChars = document.getElementById('mChars');
+
+const FAV_KALIT = 'animeuz_favs';
+
+let holat = { rejim: 'top', sahifa: 1, soz: '' };
+let joriyAnimelar = [];
+let modalAnime = null;
+let aslTavsif = '';
+
+/* ===== MAVZU (tungi/kunduzgi) ===== */
+const mavzuBtn = document.getElementById('mavzuBtn');
+function mavzuOrnat(m) {
+  document.documentElement.dataset.theme = m;
+  mavzuBtn.textContent = m === 'dark' ? '☀️' : '🌙';
+  localStorage.setItem('animeuz_theme', m);
+}
+mavzuOrnat(document.documentElement.dataset.theme);
+mavzuBtn.onclick = () =>
+  mavzuOrnat(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+
+/* ===== SAQLANGANLAR (localStorage) ===== */
+function favlar() {
+  try { return JSON.parse(localStorage.getItem(FAV_KALIT)) || []; }
+  catch { return []; }
+}
+function favBormi(id) { return favlar().some(f => f.mal_id === id); }
+function favniSaqla(r) { localStorage.setItem(FAV_KALIT, JSON.stringify(r)); }
+
+function qisqartir(a) {
+  return {
+    mal_id: a.mal_id,
+    title: a.title,
+    images: { jpg: { large_image_url: a.images?.jpg?.large_image_url || a.images?.jpg?.image_url || '' } },
+    year: a.year || a.aired?.prop?.from?.year || null,
+    score: a.score || null
+  };
+}
+
+function favAlmashtir(a) {
+  const r = favlar();
+  const i = r.findIndex(f => f.mal_id === a.mal_id);
+  if (i >= 0) r.splice(i, 1); else r.push(qisqartir(a));
+  favniSaqla(r);
+  return i < 0;
+}
+
+function favTugmalariniYangila(id, qoshildi) {
+  document.querySelectorAll(`.fav-btn[data-id="${id}"]`).forEach(b => {
+    b.classList.toggle('active', qoshildi);
+    b.textContent = qoshildi ? '❤️' : '🤍';
+  });
+}
+
+/* ===== URL + SARLAVHA ===== */
+function urlYasa() {
+  const p = holat.sahifa, s = encodeURIComponent(holat.soz);
+  switch (holat.rejim) {
+    case 'top':      return `${API}/top/anime?page=${p}&limit=24&sfw=true`;
+    case 'airing':   return `${API}/top/anime?filter=airing&page=${p}&limit=24&sfw=true`;
+    case 'season':   return `${API}/seasons/now?page=${p}&limit=24&sfw=true`;
+    case 'movies':   return `${API}/top/anime?type=movie&page=${p}&limit=24&sfw=true`;
+    case 'upcoming': return `${API}/top/anime?filter=upcoming&page=${p}&limit=24&sfw=true`;
+    case 'search':   return `${API}/anime?q=${s}&page=${p}&limit=24&sfw=true`;
+  }
+}
+
+const SARLAVHALAR = {
+  top: '🔥 Top reyting', airing: '📺 Hozir efirda', season: '📅 Bu mavsum animelari',
+  movies: '🎬 Eng yaxshi anime filmlari', upcoming: '🗓 Kutilmoqda'
+};
+
+/* ===== YUKLASH ===== */
+async function yukla(rejim, sahifa = 1, soz = '') {
+  holat = { rejim, sahifa, soz };
+  tablarniYangila();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  if (rejim === 'fav') {
+    const r = favlar();
+    sarlavha.textContent = `❤️ Saqlanganlar (${r.length})`;
+    pager.style.display = 'none';
+    grid.innerHTML = '';
+    if (!r.length) {
+      statusEl.style.display = 'block';
+      statusEl.innerHTML = "😕 Hali hech narsa saqlamadingiz. Kartalardagi 🤍 tugmasi bilan qo'shing.";
+    } else {
+      statusEl.style.display = 'none';
+      chizish(r);
+    }
+    return;
+  }
+
+  grid.innerHTML = '';
+  pager.style.display = 'none';
+  statusEl.style.display = 'block';
+  statusEl.innerHTML = '<div class="spinner"></div>Yuklanmoqda...';
+  sarlavha.textContent = rejim === 'search' ? `🔍 "${soz}" bo'yicha natijalar` : SARLAVHALAR[rejim];
+
+  try {
+    const javob = await fetch(urlYasa());
+    if (!javob.ok) throw new Error(javob.status);
+    const natija = await javob.json();
+
+    if (!natija.data?.length) {
+      statusEl.innerHTML = '😕 Hech narsa topilmadi.';
+      return;
+    }
+    chizish(natija.data);
+    yangilaPager(natija.pagination);
+  } catch (e) {
+    statusEl.innerHTML = e.message === '429'
+      ? "⏳ Juda tez so'rov yuborildi. Bir soniya kutib, qayta bosing."
+      : "⚠️ Internet bilan aloqa yo'q. Qayta urinib ko'ring.";
+  }
+}
+
+/* ===== TABLAR ===== */
+function tablarniYangila() {
+  document.querySelectorAll('.tab').forEach(t =>
+    t.classList.toggle('active', t.dataset.rejim === holat.rejim));
+}
+document.querySelectorAll('.tab').forEach(t =>
+  t.onclick = () => yukla(t.dataset.rejim));
+
+/* ===== PAGER ===== */
+function yangilaPager(p) {
+  const umumiy = p?.last_visible_page || 1;
+  const joriy = p?.current_page || holat.sahifa;
+  pager.style.display = umumiy > 1 ? 'flex' : 'none';
+  pageInfo.textContent = `${joriy} / ${umumiy}`;
+  prevBtn.disabled = joriy <= 1;
+  nextBtn.disabled = joriy >= umumiy;
+}
+prevBtn.onclick = () => yukla(holat.rejim, holat.sahifa - 1, holat.soz);
+nextBtn.onclick = () => yukla(holat.rejim, holat.sahifa + 1, holat.soz);
+
+/* ===== QIDIRUV (jonli, debounce bilan) ===== */
+function qidiruv(e) {
+  e.preventDefault();
+  const soz = searchInput.value.trim();
+  if (!soz) return false;
+  yukla('search', 1, soz);
+  return false;
+}
+
+let debounceTaymer;
+searchInput.addEventListener('input', () => {
+  clearTimeout(debounceTaymer);
+  const qiymat = searchInput.value.trim();
+  debounceTaymer = setTimeout(() => {
+    if (qiymat.length >= 2) yukla('search', 1, qiymat);
+    else if (qiymat.length === 0) yukla('top', 1);
+  }, 600);
+});
+
+/* ===== KARTALAR ===== */
+function chizish(animelar) {
+  statusEl.style.display = 'none';
+  joriyAnimelar = animelar;
+  grid.innerHTML = animelar.map(a => {
+    const yil = a.year || a.aired?.prop?.from?.year || '';
+    const fav = favBormi(a.mal_id);
+    const nom = a.title || '';
+    return `
+    <div class="anime-card" data-id="${a.mal_id}">
+      <img src="${a.images?.jpg?.large_image_url || ''}" loading="lazy" alt="${nom.replace(/"/g, '')}">
+      <button class="fav-btn ${fav ? 'active' : ''}" data-id="${a.mal_id}" title="Saqlash">${fav ? '❤️' : '🤍'}</button>
+      <div class="card-info">
+        <h3>${nom}</h3>
+        <div class="card-meta">
+          <span>${yil || '—'}</span>
+          <span class="score">★ ${a.score || '—'}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+grid.addEventListener('click', e => {
+  const favBtn = e.target.closest('.fav-btn');
+  if (favBtn) {
+    const id = +favBtn.dataset.id;
+    const a = joriyAnimelar.find(x => x.mal_id === id);
+    if (!a) return;
+    const qoshildi = favAlmashtir(a);
+    favTugmalariniYangila(id, qoshildi);
+    if (holat.rejim === 'fav') {
+      chizish(favlar());
+      sarlavha.textContent = `❤️ Saqlanganlar (${favlar().length})`;
+    }
+    return;
+  }
+  const karta = e.target.closest('.anime-card');
+  if (karta) malumot(+karta.dataset.id);
+});
+
+/* ===== MODAL ===== */
+async function malumot(id) {
+  try {
+    const javob = await fetch(`${API}/anime/${id}/full`);
+    if (!javob.ok) throw new Error();
+    const { data } = await javob.json();
+    modalOch(data);
+  } catch (e) {
+    alert("Ma'lumot yuklanmadi. Qayta urinib ko'ring.");
+  }
+}
+
+function modalOch(a) {
+  modalAnime = a;
+  document.getElementById('mImg').src = a.images?.jpg?.large_image_url || '';
+  document.getElementById('mTitle').textContent = a.title_english || a.title || '';
+  document.getElementById('mTitleJap').textContent = a.title_japanese || '';
+  document.getElementById('mTags').innerHTML =
+    [...(a.genres || []), ...(a.themes || [])]
+      .map(g => `<span class="tag">${g.name}</span>`).join('');
+  const yil = a.year || a.aired?.prop?.from?.year || '';
+  document.getElementById('mInfo').innerHTML =
+    `★ <b>${a.score || '—'}</b> · ${a.episodes || '?'} epizod · ${a.type || ''}` +
+    `${yil ? ' · ' + yil : ''}${a.status ? ' · ' + a.status : ''}` +
+    ` · 👥 ${(a.members || 0).toLocaleString()}`;
+  mDesc.textContent =
+    a.synopsis ? a.synopsis.replace(/\[Written by MAL Rewrite\]/g, '').trim() : 'Tavsif mavjud emas.';
+
+  /* Tarjima holatini tiklash */
+  aslTavsif = mDesc.textContent;
+  tarjimaBtn.dataset.holat = 'asl';
+  if (a.synopsis && a.synopsis.trim()) {
+    tarjimaBtn.style.display = 'inline-block';
+    tarjimaBtn.textContent = "🇺🇿 O'zbekchaga tarjima";
+  } else {
+    tarjimaBtn.style.display = 'none';
+  }
+
+  treylBox.innerHTML = '';
+  if (a.trailer?.youtube_id) {
+    treylBtn.style.display = 'inline-block';
+    treylBtn.textContent = "▶ Treylerni ko'rish";
+  } else {
+    treylBtn.style.display = 'none';
+  }
+  yangilaModalFav();
+
+  qahramonlarYukla(a.mal_id);   /* Qahramonlarni avtomatik yuklash */
+
+  modalBg.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function yangilaModalFav() {
+  if (!modalAnime) return;
+  const bor = favBormi(modalAnime.mal_id);
+  favModalBtn.textContent = bor ? '✅ Saqlangan' : '❤️ Saqlash';
+}
+
+favModalBtn.onclick = () => {
+  if (!modalAnime) return;
+  const qoshildi = favAlmashtir(modalAnime);
+  yangilaModalFav();
+  favTugmalariniYangila(modalAnime.mal_id, qoshildi);
+};
+
+treylBtn.onclick = () => {
+  const yt = modalAnime?.trailer?.youtube_id;
+  if (!yt) return;
+  treylBox.innerHTML =
+    `<iframe src="https://www.youtube.com/embed/${yt}" title="Treyler"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen></iframe>`;
+  treylBtn.style.display = 'none';
+};
+
+function modalYop(e) { if (e.target === modalBg) modalYopish(); }
+function modalYopish() {
+  modalBg.classList.remove('open');
+  document.body.style.overflow = '';
+  treylBox.innerHTML = '';
+}
+
+/* ===== QAHRAMONLAR ===== */
+function chiroyliIsm(nom) {
+  const qism = (nom || '').split(', ');
+  return qism.length === 2 ? qism.reverse().join(' ') : nom || '';
+}
+
+async function qahramonlarYukla(id) {
+  mCharsBox.style.display = 'none';
+  mChars.innerHTML = '';
+  try {
+    const javob = await fetch(`${API}/anime/${id}/characters`);
+    if (!javob.ok) return;
+    const natija = await javob.json();
+    if (modalAnime && modalAnime.mal_id !== id) return;   /* modal allaqachon almashgan */
+    const data = natija.data || [];
+    if (!data.length) return;
+
+    const bosh = data.filter(c => c.role === 'Main');
+    const qolgan = data.filter(c => c.role !== 'Main');
+    mChars.innerHTML = [...bosh, ...qolgan].slice(0, 10).map(c => {
+      const va = (c.voice_actors || []).find(v => v.language === 'Japanese');
+      return `
+      <div class="char-card">
+        <img src="${c.character?.images?.jpg?.image_url || ''}" loading="lazy" alt="">
+        <div class="char-name">${chiroyliIsm(c.character?.name)}</div>
+        <div class="char-role">${c.role === 'Main' ? '⭐ Bosh qahramon' : 'Yordamchi'}</div>
+        ${va ? `<div class="char-va">🎙 ${va.person?.name || ''}</div>` : ''}
+      </div>`;
+    }).join('');
+    mCharsBox.style.display = 'block';
+  } catch (e) { /* jim o'tkazamiz — bo'lim ko'rsatilmaydi */ }
+}
+
+/* ===== O'ZBEKCHAGA TARJIMA (bepul API, kalit kerak emas) ===== */
+function bolakla(matn, hajm = 450) {
+  const jumlar = matn.match(/[^.!?]+[.!?]*\s*/g) || [matn];
+  const bolaklar = [];
+  let joriy = '';
+  for (let jumla of jumlar) {
+    while (jumla.length > hajm) {          /* juda uzun jumla bo'lsa */
+      if (joriy) { bolaklar.push(joriy.trim()); joriy = ''; }
+      bolaklar.push(jumla.slice(0, hajm));
+      jumla = jumla.slice(hajm);
+    }
+    if ((joriy + jumla).length > hajm) {
+      if (joriy) bolaklar.push(joriy.trim());
+      joriy = jumla;
+    } else {
+      joriy += jumla;
+    }
+  }
+  if (joriy.trim()) bolaklar.push(joriy.trim());
+  return bolaklar;
+}
+
+/* 1-navbat: Google (sifatli, rasmiysiz) */
+async function googleTarjima(bolak) {
+  const javob = await fetch(
+    `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=uz&dt=t&q=${encodeURIComponent(bolak)}`
+  );
+  if (!javob.ok) throw new Error('google');
+  const natija = await javob.json();
+  const t = (natija[0] || []).map(x => x[0]).join('');
+  if (!t.trim()) throw new Error('empty');
+  return t;
+}
+
+/* 2-navbat (zaxira): MyMemory */
+async function myMemoryTarjima(bolak) {
+  const javob = await fetch(
+    `https://api.mymemory.translated.net/get?q=${encodeURIComponent(bolak)}&langpair=en|uz`
+  );
+  if (!javob.ok) throw new Error('mymemory');
+  const natija = await javob.json();
+  const t = natija?.responseData?.translatedText || '';
+  if (!t || /WARNING|INVALID|QUERY/i.test(t)) throw new Error('mymemory');
+  return t;
+}
+
+tarjimaBtn.onclick = async () => {
+  /* Agar hozir tarjima ko'rsatilayotgan bo'lsa — asl nusxaga qaytish */
+  if (tarjimaBtn.dataset.holat === 'tarjima') {
+    mDesc.textContent = aslTavsif;
+    tarjimaBtn.textContent = "🇺🇿 O'zbekchaga tarjima";
+    tarjimaBtn.dataset.holat = 'asl';
+    return;
+  }
+  if (!aslTavsif) return;
+
+  const id = modalAnime?.mal_id;
+  tarjimaBtn.disabled = true;
+  tarjimaBtn.textContent = '⏳ Tarjima qilinmoqda...';
+  try {
+    const qismlar = [];
+    for (const b of bolakla(aslTavsif)) {
+      try { qismlar.push(await googleTarjima(b)); }
+      catch { qismlar.push(await myMemoryTarjima(b)); }
+    }
+    if (modalAnime?.mal_id !== id) return;   /* modal almashib bo'ldi */
+    mDesc.textContent = qismlar.join(' ').trim();
+    tarjimaBtn.textContent = '🇬🇧 Asl nusxaga qaytish';
+    tarjimaBtn.dataset.holat = 'tarjima';
+  } catch (e) {
+    alert("Tarjima amalga oshmadi. Internetni tekshirib, qayta urinib ko'ring.");
+  }
+  tarjimaBtn.disabled = false;
+};
+
+/* ===== TASODIFIY ANIME ===== */
+async function tasodifiy() {
+  try {
+    const javob = await fetch(`${API}/random/anime`);
+    if (!javob.ok) throw new Error();
+    const { data } = await javob.json();
+    if (data) modalOch(data);
+  } catch (e) {
+    alert("Tasodifiy anime yuklanmadi. Qayta urinib ko'ring.");
+  }
+}
+
+/* ===== KLAVIATURA ===== */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') modalYopish();
+  if (e.key === '/' && document.activeElement !== searchInput) {
+    e.preventDefault();
+    searchInput.focus();
+  }
+});
+
+/* ===== BOSHLASH ===== */
+yukla('top');
+</script>
+</body>
+</html>
